@@ -1,0 +1,68 @@
+openapi: 3.0.0
+info:
+  title: Payment Service API
+  version: 1.0.0
+  description: API for handling payments and subscriptions via Stripe.
+servers:
+  - url: http://localhost:3003
+    description: Local server
+paths:
+  /api/payments/intent:
+    post:
+      summary: Create a payment intent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: integer
+                currency:
+                  type: string
+                customerId:
+                  type: string
+      responses:
+        '201':
+          description: Payment intent created
+  /api/subscriptions:
+    post:
+      summary: Create a subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerId:
+                  type: string
+                priceId:
+                  type: string
+      responses:
+        '201':
+          description: Subscription created
+  /api/subscriptions/{subscriptionId}:
+    get:
+      summary: Get subscription details
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription details
+    delete:
+      summary: Cancel a subscription
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription cancelled 
