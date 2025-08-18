@@ -6,29 +6,42 @@ export interface Course {
   _id: string;
   title: string;
   description: string;
-  instructor: {
+  instructor?: {
     _id: string;
-    firstName: string;
-    lastName: string;
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    email?: string;
   };
   thumbnail: string;
   price: number;
-  rating: number;
-  totalStudents: number;
+  rating: number | {
+    average: number;
+    count: number;
+  };
+  enrolledStudents?: string[];
+  totalStudents?: number;
   duration: number;
   category: string;
   level: string;
-  sections: {
+  lessons?: string[];
+  sections?: Array<{
     _id: string;
     title: string;
-    lessons: {
+    lessons: Array<{
       _id: string;
       title: string;
       type: 'video' | 'quiz' | 'assignment';
       duration: number;
-      completed: boolean;
-    }[];
-  }[];
+      completed?: boolean;
+    }>;
+  }>;
+  requirements?: string[];
+  objectives?: string[];
+  status: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CourseFilters {
@@ -40,16 +53,22 @@ export interface CourseFilters {
 }
 
 export interface CourseResponse {
-  courses: Course[];
-  total: number;
-  page: number;
-  totalPages: number;
+  courses?: Course[];
+  total?: number;
+  page?: number;
+  totalPages?: number;
 }
 
 class CourseService {
   async getCourses(filters: CourseFilters = {}): Promise<any> {
-    const response = await axios.get(`${API_URL}/courses`, { params: filters });
-    return response.data;
+    try {
+      const response = await axios.get(`${API_URL}/courses`, { params: filters });
+      console.log('API Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      throw error;
+    }
   }
 
   async getCourseById(id: string): Promise<Course> {
@@ -98,4 +117,5 @@ class CourseService {
   }
 }
 
-export default new CourseService(); 
+const courseService = new CourseService();
+export default courseService; 

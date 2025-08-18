@@ -52,3 +52,15 @@
 {"level":"info","message":"Twilio SMS service initialized successfully","timestamp":"2025-07-19T14:35:37.835Z"}
 {"level":"info","message":"Connecté à RabbitMQ","timestamp":"2025-07-19T14:35:37.942Z"}
 {"level":"info","message":"Connecté à MongoDB","timestamp":"2025-07-19T14:35:38.713Z"}
+{"level":"info","message":"Serveur démarré sur le port 3004","timestamp":"2025-08-08T19:33:54.496Z"}
+{"level":"info","message":"SendGrid email service initialized successfully","timestamp":"2025-08-08T19:33:54.319Z"}
+{"address":"::1","code":"ECONNREFUSED","errno":-4078,"level":"error","message":"Erreur de connexion à RabbitMQ: connect ECONNREFUSED ::1:5672","port":5672,"stack":"Error: connect ECONNREFUSED ::1:5672\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1615:16)","syscall":"connect","timestamp":"2025-08-08T19:33:54.510Z"}
+{"level":"info","message":"SMTP email service initialized successfully","timestamp":"2025-08-08T19:33:54.327Z"}
+{"level":"info","message":"Twilio SMS service initialized successfully","timestamp":"2025-08-08T19:33:54.443Z"}
+{"level":"info","message":"Connecté à MongoDB","timestamp":"2025-08-08T19:33:55.179Z"}
+{"level":"info","message":"Serveur démarré sur le port 3004","timestamp":"2025-08-16T14:19:08.104Z"}
+{"level":"info","message":"SendGrid email service initialized successfully","timestamp":"2025-08-16T14:19:07.850Z"}
+{"level":"info","message":"SMTP email service initialized successfully","timestamp":"2025-08-16T14:19:07.860Z"}
+{"level":"info","message":"Twilio SMS service initialized successfully","timestamp":"2025-08-16T14:19:08.025Z"}
+{"address":"::1","code":"ECONNREFUSED","errno":-4078,"level":"error","message":"Erreur de connexion à RabbitMQ: connect ECONNREFUSED ::1:5672","port":5672,"stack":"Error: connect ECONNREFUSED ::1:5672\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1615:16)","syscall":"connect","timestamp":"2025-08-16T14:19:08.117Z"}
+{"level":"info","message":"Connecté à MongoDB","timestamp":"2025-08-16T14:19:08.944Z"}

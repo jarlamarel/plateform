@@ -10,6 +10,9 @@ import Register from './pages/Register';
 import CourseList from './pages/CourseList';
 import CourseDetail from './pages/CourseDetail';
 import CourseLearn from './pages/CourseLearn';
+import LessonManagement from './pages/LessonManagement';
+import VideoDemo from './pages/VideoDemo';
+import VideoUploadDirect from './pages/VideoUploadDirect';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import OAuthCallback from './pages/OAuthCallback';
@@ -33,6 +36,23 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <CourseLearn />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="courses/:courseId/lessons"
+            element={
+              <PrivateRoute>
+                <LessonManagement />
+              </PrivateRoute>
+            }
+          />
+          <Route path="video-demo" element={<VideoDemo />} />
+          <Route
+            path="courses/:courseId/upload-videos"
+            element={
+              <PrivateRoute>
+                <VideoUploadDirect />
               </PrivateRoute>
             }
           />

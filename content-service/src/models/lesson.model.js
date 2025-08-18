@@ -25,7 +25,7 @@ const lessonSchema = new mongoose.Schema(
       ref: 'Course',
       required: [true, 'Le cours est requis'],
     },
-    instructorId: {
+    instructor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'L\'instructeur est requis'],
@@ -65,6 +65,44 @@ const lessonSchema = new mongoose.Schema(
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    // Champs pour les vidéos
+    videoUrl: {
+      type: String,
+      default: null,
+    },
+    videoType: {
+      type: String,
+      enum: ['youtube', 'vimeo', 'local', 'external'],
+      default: null,
+    },
+    videoFileName: {
+      type: String,
+      default: null, // Pour les vidéos stockées localement
+    },
+    videoSize: {
+      type: Number,
+      default: null, // Taille du fichier en bytes
+    },
+    videoMimeType: {
+      type: String,
+      default: null,
+    },
+    videoDuration: {
+      type: Number,
+      default: null, // Durée de la vidéo en secondes
+    },
+    videoThumbnail: {
+      type: String,
+      default: null, // URL de la miniature de la vidéo
+    },
+    originalVideoUrl: {
+      type: String,
+      default: null, // URL originale (avant conversion en embed)
+    },
+    videoDescription: {
+      type: String,
+      default: null,
     },
   },
   {
@@ -134,7 +172,7 @@ lessonSchema.statics.findByCourse = function(courseId) {
 };
 
 lessonSchema.statics.findByInstructor = function(instructorId) {
-  return this.find({ instructorId, isDeleted: false });
+  return this.find({ instructor: instructorId, isDeleted: false });
 };
 
 // Middleware pre-save

@@ -16,6 +16,29 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// Obtenir un utilisateur par ID (pour les services internes)
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+    
+    // Retourner seulement les données publiques pour la sécurité
+    res.json({
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+});
+
 // Mettre à jour le profil de l'utilisateur
 router.put('/me', auth, async (req, res) => {
   const updates = Object.keys(req.body);

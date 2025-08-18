@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -10,6 +10,7 @@ import {
   Divider,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Chip,
@@ -28,6 +29,7 @@ import {
   Assignment as AssignmentIcon,
   Quiz as QuizIcon,
   CheckCircle as CheckCircleIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import courseService, { Course } from '../services/course.service';
@@ -71,9 +73,10 @@ const CourseDetail: React.FC = () => {
       fetchCourseDetails();
       fetchCourseReviews();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const fetchCourseDetails = async () => {
+  const fetchCourseDetails = useCallback(async () => {
     try {
       const courseData = await courseService.getCourseById(id!);
       setCourse(courseData);
@@ -83,16 +86,16 @@ const CourseDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchCourseReviews = async () => {
+  const fetchCourseReviews = useCallback(async () => {
     try {
       const reviewsData = await courseService.getCourseReviews(id!);
       setReviews(reviewsData);
     } catch (error) {
       console.error('Erreur lors de la récupération des avis:', error);
     }
-  };
+  }, [id]);
 
   const handleEnroll = async () => {
     if (!user) {
@@ -132,21 +135,25 @@ const CourseDetail: React.FC = () => {
           <Typography variant="body1" color="text.secondary" paragraph>
             {course.description}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Rating value={course.rating} precision={0.5} readOnly />
-            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-              ({course.rating} - {reviews?.totalReviews || 0} avis)
-            </Typography>
-          </Box>
+                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+             <Rating 
+               value={typeof course.rating === 'number' ? course.rating : course.rating?.average || 0} 
+               precision={0.5} 
+               readOnly 
+             />
+             <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+               ({typeof course.rating === 'number' ? course.rating : course.rating?.average || 0} - {reviews?.totalReviews || 0} avis)
+             </Typography>
+           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <AccessTimeIcon sx={{ mr: 0.5 }} />
               <Typography variant="body2">{course.duration} heures</Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <PeopleIcon sx={{ mr: 0.5 }} />
-              <Typography variant="body2">{course.totalStudents} étudiants</Typography>
-            </Box>
+                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+               <PeopleIcon sx={{ mr: 0.5 }} />
+               <Typography variant="body2">{course.totalStudents || course.enrolledStudents?.length || 0} étudiants</Typography>
+             </Box>
             <Chip label={course.level} color="primary" variant="outlined" />
           </Box>
         </Grid>
@@ -154,9 +161,23 @@ const CourseDetail: React.FC = () => {
           <Paper sx={{ p: 3, position: 'sticky', top: 20 }}>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="h4" color="primary">
-                {course.price}€
+                {typeof course.price === 'number' ? course.price.toFixed(2) : course.price}€
               </Typography>
             </Box>
+            {user?.role === 'instructor' && course.instructor?._id === user._id ? (
+              <Button
+                variant="outlined"
+                color="primary"
+                fullWidth
+                size="large"
+                startIcon={<EditIcon />}
+                onClick={() => navigate(`/courses/${course._id}/lessons`)}
+                sx={{ mb: 2 }}
+              >
+                Gérer les leçons
+              </Button>
+            ) : null}
+            
             <Button
               variant="contained"
               color="primary"
@@ -180,10 +201,10 @@ const CourseDetail: React.FC = () => {
                   <ListItemIcon>
                     <PlayCircleIcon />
                   </ListItemIcon>
-                  <ListItemText primary={`${course.sections.reduce(
-                    (acc, section) => acc + section.lessons.length,
+                  <ListItemText primary={`${course.sections?.reduce(
+                    (acc: number, section: any) => acc + section.lessons.length,
                     0
-                  )} leçons`} />
+                  ) || 0} leçons`} />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon>
@@ -217,7 +238,7 @@ const CourseDetail: React.FC = () => {
 
         <TabPanel value={tabValue} index={0}>
           <List>
-            {course.sections.map((section) => (
+            {course.sections?.map((section: any) => (
               <React.Fragment key={section._id}>
                 <ListItem>
                   <ListItemText
@@ -225,8 +246,12 @@ const CourseDetail: React.FC = () => {
                     primaryTypographyProps={{ variant: 'h6' }}
                   />
                 </ListItem>
-                {section.lessons.map((lesson) => (
-                  <ListItem key={lesson._id} sx={{ pl: 4 }}>
+                {section.lessons.map((lesson: any) => (
+                  <ListItemButton 
+                    key={lesson._id} 
+                    sx={{ pl: 4 }}
+                    onClick={() => navigate(`/courses/${id}/learn?lesson=${lesson._id}`)}
+                  >
                     <ListItemIcon>
                       {lesson.type === 'video' ? (
                         <PlayCircleIcon />
@@ -240,10 +265,14 @@ const CourseDetail: React.FC = () => {
                       primary={lesson.title}
                       secondary={`${lesson.duration} minutes`}
                     />
-                  </ListItem>
+                  </ListItemButton>
                 ))}
               </React.Fragment>
-            ))}
+            )) || (
+              <ListItem>
+                <ListItemText primary="Aucune section disponible" />
+              </ListItem>
+            )}
           </List>
         </TabPanel>
 
@@ -266,11 +295,11 @@ const CourseDetail: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Avatar
                       src={undefined}
-                      alt={`${course.instructor?.firstName} ${course.instructor?.lastName}`}
+                      alt={course.instructor?.name || `${course.instructor?.firstName || ''} ${course.instructor?.lastName || ''}`}
                       sx={{ width: 64, height: 64, mr: 2 }}
                     />
                     <Typography variant="subtitle1">
-                      {`${course.instructor?.firstName} ${course.instructor?.lastName}`}
+                      {course.instructor?.name || `${course.instructor?.firstName || ''} ${course.instructor?.lastName || ''}`}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -286,19 +315,19 @@ const CourseDetail: React.FC = () => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Typography variant="h3" color="primary" sx={{ mr: 2 }}>
-                {reviews?.averageRating.toFixed(1)}
+                {reviews?.averageRating ? reviews.averageRating.toFixed(1) : '0.0'}
               </Typography>
               <Box>
-                <Rating value={reviews?.averageRating} precision={0.5} readOnly />
+                <Rating value={reviews?.averageRating || 0} precision={0.5} readOnly />
                 <Typography variant="body2" color="text.secondary">
-                  Basé sur {reviews?.totalReviews} avis
+                  Basé sur {reviews?.totalReviews || 0} avis
                 </Typography>
               </Box>
             </Box>
           </Box>
 
           <List>
-            {reviews?.reviews.map((review: any) => (
+            {reviews?.reviews?.map((review: any) => (
               <ListItem key={review._id} alignItems="flex-start">
                 <ListItemIcon>
                   <Avatar src={review.user.avatar} alt={review.user.name} />
@@ -333,7 +362,11 @@ const CourseDetail: React.FC = () => {
                   }
                 />
               </ListItem>
-            ))}
+            )) || (
+              <ListItem>
+                <ListItemText primary="Aucun avis disponible" />
+              </ListItem>
+            )}
           </List>
         </TabPanel>
       </Box>

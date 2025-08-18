@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -18,6 +18,7 @@ import {
   Rating,
   Pagination,
   Paper,
+  Button,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -52,9 +53,10 @@ const CourseList: React.FC = () => {
 
   useEffect(() => {
     fetchCourses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, category, level, page]);
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     setLoading(true);
     try {
       const filters: CourseFilters = {
@@ -66,9 +68,18 @@ const CourseList: React.FC = () => {
       };
 
       const response = await courseService.getCourses(filters);
-      if (response.size > 0) {
+      console.log('CourseList Response:', response);
+      
+      // Handle both array and object responses
+      if (Array.isArray(response)) {
+        setCourses(response);
+        setTotalPages(1);
+      } else if (response && response.courses) {
         setCourses(response.courses);
-      setTotalPages(response.totalPages);
+        setTotalPages(response.totalPages || 1);
+      } else {
+        setCourses([]);
+        setTotalPages(1);
       }
       
     } catch (error) {
@@ -77,7 +88,7 @@ const CourseList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, category, level, page]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -181,66 +192,118 @@ const CourseList: React.FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     cursor: 'pointer',
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    transition: 'all 0.3s ease-in-out',
                     '&:hover': {
-                      transform: 'translateY(-4px)',
-                      transition: 'transform 0.2s ease-in-out',
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
                     },
                   }}
                   onClick={() => navigate(`/courses/${course._id}`)}
                 >
-                  <CardMedia
-                    component="img"
-                    height="140"
-                    image={course.thumbnail}
-                    alt={course.title}
-                  />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography gutterBottom variant="h6" component="h2">
+                  <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+                    <CardMedia
+                      component="img"
+                      height="180"
+                      image={course.thumbnail}
+                      alt={course.title}
+                      sx={{
+                        transition: 'transform 0.3s ease-in-out',
+                        '&:hover': {
+                          transform: 'scale(1.05)',
+                        },
+                      }}
+                    />
+                    <Chip
+                      label={course.level}
+                      size="small"
+                      color={course.level === 'beginner' ? 'success' : course.level === 'intermediate' ? 'warning' : 'error'}
+                      sx={{
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        fontWeight: 'bold',
+                      }}
+                    />
+                  </Box>
+                  <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+                    <Typography 
+                      gutterBottom 
+                      variant="h6" 
+                      component="h2"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: '1.1rem',
+                        lineHeight: 1.3,
+                        mb: 1.5,
+                        minHeight: '2.6rem',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
                       {course.title}
                     </Typography>
                     <Typography
                       variant="body2"
                       color="text.secondary"
                       sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        mb: 2,
+                        minHeight: '3rem',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        lineHeight: 1.5,
                       }}
                     >
                       {course.description}
                     </Typography>
-                    <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-                      <Rating value={course.rating} precision={0.5} size="small" readOnly />
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        ({course.rating})
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Rating 
+                        value={typeof course.rating === 'number' ? course.rating : course.rating?.average || 0} 
+                        precision={0.5} 
+                        size="small" 
+                        readOnly 
+                      />
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1, fontSize: '0.875rem' }}>
+                        ({typeof course.rating === 'number' ? 0 : course.rating?.count || 0})
                       </Typography>
                     </Box>
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+                        <AccessTimeIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
                           {course.duration}h
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <PeopleIcon fontSize="small" sx={{ mr: 0.5 }} />
+                        <PeopleIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
-                          {course.totalStudents} étudiants
+                          {course.enrolledStudents?.length || 0}
                         </Typography>
                       </Box>
                     </Box>
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="h6" color="primary">
-                        {course.price}€
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
+                      <Typography variant="h6" color="primary" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+                        {typeof course.price === 'number' ? course.price.toFixed(2) : course.price}€
                       </Typography>
-                      <Chip
-                        label={course.level}
+                      <Button
                         size="small"
-                        color="primary"
                         variant="outlined"
-                      />
+                        color="primary"
+                        sx={{
+                          borderRadius: 20,
+                          px: 2,
+                          textTransform: 'none',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Voir plus
+                      </Button>
                     </Box>
                   </CardContent>
                 </Card>

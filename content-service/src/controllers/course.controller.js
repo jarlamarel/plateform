@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
+const axios = require('axios');
 const Course = require('../models/course.model');
 const Lesson = require('../models/lesson.model');
 const Resource = require('../models/resource.model');
 const logger = require('../utils/logger');
+const config = require('../config');
 
 // Obtenir tous les cours
 exports.getAllCourses = async (req, res) => {
@@ -39,11 +41,18 @@ exports.getAllCourses = async (req, res) => {
         }
       ];
       
+      // Ajouter des headers pour éviter la mise en cache
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       return res.json(demoCourses);
     }
 
     const { category, level, language, search } = req.query;
-    const query = { isDeleted: false };
+    const query = {}; // Start with empty query to see all courses
 
     if (category) query.category = category;
     if (level) query.level = level;
@@ -52,10 +61,65 @@ exports.getAllCourses = async (req, res) => {
       query.$text = { $search: search };
     }
 
+    logger.info('Course query:', query);
+    logger.info('MongoDB connection state:', mongoose.connection.readyState);
+
     const courses = await Course.find(query)
-      .populate('instructorId', 'name email')
       .sort('-createdAt');
 
+    logger.info('Courses found:', courses.length);
+    if (courses.length > 0) {
+      logger.info('First course:', { title: courses[0].title, status: courses[0].status, isDeleted: courses[0].isDeleted });
+    }
+
+    // If no courses found, return demo courses as fallback
+    if (courses.length === 0) {
+      logger.info('No courses found in database, returning demo courses');
+      const demoCourses = [
+        {
+          _id: 'demo-course-1',
+          title: 'Introduction à JavaScript',
+          description: 'Apprenez les bases de JavaScript',
+          category: 'programming',
+          level: 'beginner',
+          price: 29.99,
+          duration: 120,
+          thumbnail: 'https://via.placeholder.com/300x200',
+          instructor: { name: 'John Doe', email: 'john@example.com' },
+          rating: { average: 4.5, count: 25 },
+          createdAt: new Date()
+        },
+        {
+          _id: 'demo-course-2',
+          title: 'React pour débutants',
+          description: 'Créez votre première application React',
+          category: 'programming',
+          level: 'beginner',
+          price: 39.99,
+          duration: 180,
+          thumbnail: 'https://via.placeholder.com/300x200',
+          instructor: { name: 'Jane Smith', email: 'jane@example.com' },
+          rating: { average: 4.8, count: 42 },
+          createdAt: new Date()
+        }
+      ];
+      
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
+      return res.json(demoCourses);
+    }
+
+    // Ajouter des headers pour éviter la mise en cache
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     res.json(courses);
   } catch (error) {
     logger.error('Erreur lors de la récupération des cours:', error);
@@ -67,15 +131,61 @@ exports.getAllCourses = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate('instructorId', 'name email')
-      .populate('lessons')
-      .populate('students', 'name email');
+      .populate('lessons');
 
     if (!course) {
       return res.status(404).json({ error: 'Cours non trouvé' });
     }
 
-    res.json(course);
+    // Récupérer les données de l'instructeur depuis l'auth-service
+    let instructorData = null;
+    if (course.instructor) {
+      try {
+        const authServiceUrl = config.services.auth.url;
+        const instructorResponse = await axios.get(`${authServiceUrl}/api/users/${course.instructor}`);
+        
+        if (instructorResponse.data) {
+          instructorData = {
+            _id: instructorResponse.data._id,
+            firstName: instructorResponse.data.firstName,
+            lastName: instructorResponse.data.lastName,
+            email: instructorResponse.data.email,
+            role: instructorResponse.data.role
+          };
+        }
+      } catch (error) {
+        logger.warn(`Impossible de récupérer les données de l'instructeur ${course.instructor}:`, error.message);
+        // On continue sans les données de l'instructeur plutôt que de faire échouer toute la requête
+      }
+    }
+
+    // Adapter la structure pour le frontend
+    const courseData = {
+      ...course.toObject(),
+      // Remplacer l'ID de l'instructeur par les données complètes
+      instructor: instructorData,
+      // Créer une structure de sections pour la compatibilité frontend
+      sections: course.lessons && course.lessons.length > 0 ? [
+        {
+          _id: 'main-section',
+          title: 'Contenu du cours',
+          lessons: course.lessons.map(lesson => ({
+            _id: lesson._id,
+            title: lesson.title || 'Leçon sans titre',
+            type: lesson.videoUrl ? 'video' : 'text',
+            duration: lesson.duration || 0,
+            completed: false,
+            description: lesson.description || '',
+            content: lesson.content || '',
+            videoUrl: lesson.videoUrl || null
+          }))
+        }
+      ] : [],
+      // Garder aussi le format original pour la compatibilité
+      totalStudents: course.enrolledStudents ? course.enrolledStudents.length : 0
+    };
+
+    res.json(courseData);
   } catch (error) {
     logger.error('Erreur lors de la récupération du cours:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération du cours' });
@@ -87,7 +197,7 @@ exports.createCourse = async (req, res) => {
   try {
     const courseData = {
       ...req.body,
-      instructorId: req.user.id,
+      instructor: req.user.id,
     };
 
     const course = new Course(courseData);
@@ -164,11 +274,38 @@ exports.addLesson = async (req, res) => {
       return res.status(404).json({ error: 'Cours non trouvé' });
     }
 
+    // Validation des données d'entrée
+    const { title, description, content, duration } = req.body;
+    
+    if (!title || title.trim().length < 3) {
+      return res.status(400).json({ error: 'Le titre doit contenir au moins 3 caractères' });
+    }
+    
+    if (!description || description.trim().length < 10) {
+      return res.status(400).json({ error: 'La description doit contenir au moins 10 caractères' });
+    }
+    
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Le contenu est requis' });
+    }
+
+    // Obtenir l'instructeur (depuis l'authentification ou utiliser l'instructeur du cours)
+    const instructorId = req.user?.id || req.user?._id || course.instructor;
+    
+    if (!instructorId) {
+      return res.status(401).json({ error: 'Instructeur non identifié. Veuillez vous reconnecter.' });
+    }
+
     const lessonData = {
-      ...req.body,
+      title: title.trim(),
+      description: description.trim(),
+      content: content.trim(),
+      duration: parseInt(duration) || 0,
       courseId: course._id,
-      instructorId: req.user.id,
+      instructor: instructorId,
     };
+
+    logger.info('Données de la leçon à créer:', lessonData);
 
     const lesson = new Lesson(lessonData);
     await lesson.save();
@@ -180,6 +317,16 @@ exports.addLesson = async (req, res) => {
     res.status(201).json(lesson);
   } catch (error) {
     logger.error('Erreur lors de l\'ajout de la leçon:', error);
+    
+    // Gestion spécifique des erreurs de validation Mongoose
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        error: 'Erreur de validation',
+        details: validationErrors
+      });
+    }
+    
     res.status(500).json({ error: 'Erreur lors de l\'ajout de la leçon' });
   }
 };
@@ -238,7 +385,7 @@ exports.enrollInCourse = async (req, res) => {
       return res.status(404).json({ error: 'Cours non trouvé' });
     }
 
-    await course.addStudent(req.user.id);
+    await course.enrollStudent(req.user.id);
     logger.info(`Étudiant ${req.user.id} inscrit au cours ${course._id}`);
     res.json({ message: 'Inscription réussie' });
   } catch (error) {
@@ -255,7 +402,7 @@ exports.unenrollFromCourse = async (req, res) => {
       return res.status(404).json({ error: 'Cours non trouvé' });
     }
 
-    await course.removeStudent(req.user.id);
+    await course.unenrollStudent(req.user.id);
     logger.info(`Étudiant ${req.user.id} désinscrit du cours ${course._id}`);
     res.json({ message: 'Désinscription réussie' });
   } catch (error) {
@@ -345,7 +492,7 @@ exports.addResource = async (req, res) => {
     const resourceData = {
       ...req.body,
       courseId: course._id,
-      instructorId: req.user.id,
+      instructor: req.user.id,
     };
 
     const resource = new Resource(resourceData);

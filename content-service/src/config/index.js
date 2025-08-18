@@ -3,7 +3,7 @@ require('dotenv').config();
 module.exports = {
   // Configuration du serveur
   server: {
-    port: process.env.PORT || 3007,
+    port: process.env.PORT || 3003,
     env: process.env.NODE_ENV || 'development',
   },
 
@@ -27,7 +27,18 @@ module.exports = {
     type: 'local', // 'local' ou 's3' pour une future migration
     uploadDir: process.env.UPLOAD_DIR || 'uploads',
     baseUrl: process.env.BASE_URL || 'http://localhost:3003',
-    maxFileSize: 100 * 1024 * 1024, // 100MB pour les vidéos
+    maxFileSize: 100 * 1024 * 1024, // 100MB pour les documents
+    video: {
+      uploadDir: process.env.VIDEO_UPLOAD_DIR || 'uploads/videos',
+      maxFileSize: 500 * 1024 * 1024, // 500MB pour les vidéos
+      allowedFormats: ['mp4', 'webm', 'mov', 'avi'],
+      allowedMimeTypes: [
+        'video/mp4',
+        'video/webm', 
+        'video/quicktime',
+        'video/x-msvideo'
+      ]
+    }
   },
 
   // Configuration du rate limiting

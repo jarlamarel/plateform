@@ -25,10 +25,16 @@ const { errorHandler, notFoundHandler } = require('./middlewares/error.middlewar
 console.log("test ");
 // Création des dossiers nécessaires si absents
 const uploadDir = config.storage.uploadDir || 'uploads';
+const videoDir = config.storage.video.uploadDir || 'uploads/videos';
 const logDir = config.logging.filePath || 'logs';
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log(`📁 Dossier '${uploadDir}' créé`);
+}
+if (!fs.existsSync(videoDir)) {
+  fs.mkdirSync(videoDir, { recursive: true });
+  console.log(`📁 Dossier '${videoDir}' créé`);
 }
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
@@ -55,6 +61,14 @@ app.use(
 console.log("test 3");
 // Fichiers statiques (uploads)
 app.use('/uploads', express.static(uploadDir));
+
+// Fichiers statiques pour les images (couvertures de cours, etc.)
+const publicDir = path.join(__dirname, '..', 'public');
+app.use('/images', express.static(path.join(publicDir, 'images')));
+
+// Fichiers statiques pour les vidéos
+const videoStaticDir = path.join(__dirname, '..', config.storage.video.uploadDir);
+app.use('/videos', express.static(videoStaticDir));
 
 // Route de santé publique
 //*app.get('/health', (req, res) => {

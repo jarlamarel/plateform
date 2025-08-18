@@ -6,23 +6,24 @@ const courseRoutes = require('./course.routes');
 const lessonRoutes = require('./lesson.routes');
 const resourceRoutes = require('./resource.routes');
 const uploadRoutes = require('./upload.routes');
+const videoRoutes = require('./video.routes');
 
 // Middleware d'authentification
 const { verifyToken } = require('../middlewares/auth.middleware');
 
-// Appliquer le middleware d'authentification à toutes les routes
-router.use(verifyToken);
-
-// Routes pour les cours
+// Routes pour les cours (certaines routes publiques, d'autres protégées)
 router.use('/courses', courseRoutes);
 
-// Routes pour les leçons
-router.use('/lessons', lessonRoutes);
+// Routes pour les leçons (authentification requise)
+router.use('/lessons', verifyToken, lessonRoutes);
 
-// Routes pour les ressources
-router.use('/resources', resourceRoutes);
+// Routes pour les ressources (authentification requise)
+router.use('/resources', verifyToken, resourceRoutes);
 
-// Routes pour les uploads de fichiers
-router.use('/uploads', uploadRoutes);
+// Routes pour les uploads de fichiers (authentification requise)
+router.use('/uploads', verifyToken, uploadRoutes);
+
+// Routes pour les vidéos (authentification requise)
+router.use('/videos', videoRoutes);
 
 module.exports = router; 

@@ -73,6 +73,10 @@ const courseSchema = new mongoose.Schema({
   tags: [{
     type: String
   }],
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import {
   Box,
-  Container,
-  Grid,
   Typography,
   Paper,
   List,
@@ -25,17 +23,16 @@ import {
   Quiz as QuizIcon,
   Menu as MenuIcon,
   CheckCircle as CheckCircleIcon,
-  Lock as LockIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
 import courseService, { Course } from '../services/course.service';
+import videoService from '../services/video.service';
 import LoadingSpinner from '../components/LoadingSpinner';
+import VideoPlayer from '../components/VideoPlayer';
 import { toast } from 'react-toastify';
 
 const CourseLearn: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -44,20 +41,53 @@ const CourseLearn: React.FC = () => {
   const [progress, setProgress] = useState<{ completedLessons: string[]; progress: number } | null>(null);
   const [currentLesson, setCurrentLesson] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
+  const [currentVideoInfo, setCurrentVideoInfo] = useState<any>(null);
+  const [loadingVideo, setLoadingVideo] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchCourseDetails();
       fetchCourseProgress();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const fetchCourseDetails = async () => {
+  // Effet pour charger automatiquement la vidéo quand currentLesson change
+  useEffect(() => {
+    if (currentLesson) {
+      loadVideoForLesson(currentLesson);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLesson]);
+
+  const loadVideoForLesson = async (lessonId: string) => {
+    setCurrentVideoInfo(null);
+    setLoadingVideo(true);
+    try {
+      const videoInfo = await videoService.getVideoInfo(lessonId);
+      setCurrentVideoInfo(videoInfo);
+    } catch (error) {
+      // Pas de vidéo pour cette leçon, c'est normal
+      setCurrentVideoInfo(null);
+    } finally {
+      setLoadingVideo(false);
+    }
+  };
+
+  const fetchCourseDetails = useCallback(async () => {
     try {
       const courseData = await courseService.getCourseById(id!);
       setCourse(courseData);
-      // Définir la première leçon comme leçon courante si aucune n'est sélectionnée
-      if (!currentLesson && courseData.sections.length > 0 && courseData.sections[0].lessons.length > 0) {
+      
+      // Récupérer le paramètre de query pour la leçon
+      const searchParams = new URLSearchParams(location.search);
+      const lessonFromQuery = searchParams.get('lesson');
+      
+      if (lessonFromQuery) {
+        // Si une leçon est spécifiée dans l'URL, la sélectionner
+        setCurrentLesson(lessonFromQuery);
+      } else if (!currentLesson && courseData.sections && courseData.sections.length > 0 && courseData.sections[0].lessons.length > 0) {
+        // Sinon, définir la première leçon comme leçon courante si aucune n'est sélectionnée
         setCurrentLesson(courseData.sections[0].lessons[0]._id);
       }
     } catch (error) {
@@ -66,19 +96,21 @@ const CourseLearn: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, currentLesson, location.search]);
 
-  const fetchCourseProgress = async () => {
+  const fetchCourseProgress = useCallback(async () => {
     try {
       const progressData = await courseService.getCourseProgress(id!);
       setProgress(progressData);
     } catch (error) {
       console.error('Erreur lors de la récupération de la progression:', error);
     }
-  };
+  }, [id]);
 
-  const handleLessonClick = (lessonId: string) => {
+  const handleLessonClick = async (lessonId: string) => {
     setCurrentLesson(lessonId);
+    await loadVideoForLesson(lessonId);
+    
     if (isMobile) {
       setDrawerOpen(false);
     }
@@ -103,8 +135,8 @@ const CourseLearn: React.FC = () => {
   }
 
   const currentLessonData = course.sections
-    .flatMap((section) => section.lessons)
-    .find((lesson) => lesson._id === currentLesson);
+    ?.flatMap((section: any) => section.lessons)
+    .find((lesson: any) => lesson._id === currentLesson);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -140,7 +172,7 @@ const CourseLearn: React.FC = () => {
         </Box>
         <Divider />
         <List>
-          {course.sections.map((section) => (
+          {course.sections?.map((section: any) => (
             <React.Fragment key={section._id}>
               <ListItem>
                 <ListItemText
@@ -148,7 +180,7 @@ const CourseLearn: React.FC = () => {
                   primaryTypographyProps={{ variant: 'subtitle1', fontWeight: 'bold' }}
                 />
               </ListItem>
-              {section.lessons.map((lesson) => {
+              {section.lessons.map((lesson: any) => {
                 const isCompleted = progress?.completedLessons.includes(lesson._id);
                 const isCurrent = lesson._id === currentLesson;
 
@@ -209,38 +241,65 @@ const CourseLearn: React.FC = () => {
             <Typography variant="h5" gutterBottom>
               {currentLessonData.title}
             </Typography>
-            <Typography variant="body1" paragraph>
-              {currentLessonData.type === 'video' ? (
-                <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
-                  {/* TODO: Intégrer le lecteur vidéo */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      bgcolor: 'grey.200',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <PlayCircleIcon sx={{ fontSize: 64, color: 'grey.400' }} />
-                  </Box>
+            <Box sx={{ mb: 3 }}>
+              {loadingVideo ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : currentVideoInfo ? (
+                <VideoPlayer
+                  videoUrl={currentVideoInfo.videoUrl}
+                  videoType={currentVideoInfo.videoType}
+                  title={currentVideoInfo.lessonTitle}
+                  duration={currentVideoInfo.duration}
+                  onProgress={(currentTime, duration) => {
+                    // Optionnel: suivre la progression de visionnage
+                  }}
+                  onComplete={() => {
+                    // Auto-marquer comme complété quand la vidéo est finie
+                    if (!progress?.completedLessons.includes(currentLessonData._id)) {
+                      handleMarkAsCompleted(currentLessonData._id);
+                    }
+                  }}
+                />
+              ) : currentLessonData.type === 'video' ? (
+                <Box sx={{ 
+                  bgcolor: 'grey.100', 
+                  p: 4, 
+                  borderRadius: 2, 
+                  textAlign: 'center',
+                  border: '2px dashed',
+                  borderColor: 'grey.300'
+                }}>
+                  <PlayCircleIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    Aucune vidéo disponible
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Cette leçon n'a pas encore de vidéo associée
+                  </Typography>
                 </Box>
               ) : currentLessonData.type === 'quiz' ? (
-                <Box>
-                  {/* TODO: Intégrer le quiz */}
-                  <Typography>Contenu du quiz à venir</Typography>
+                <Box sx={{ bgcolor: 'info.light', p: 3, borderRadius: 2 }}>
+                  <QuizIcon sx={{ fontSize: 48, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>Quiz</Typography>
+                  <Typography>Le système de quiz sera bientôt disponible.</Typography>
                 </Box>
               ) : (
-                <Box>
-                  {/* TODO: Intégrer le devoir */}
-                  <Typography>Contenu du devoir à venir</Typography>
+                <Box sx={{ bgcolor: 'warning.light', p: 3, borderRadius: 2 }}>
+                  <AssignmentIcon sx={{ fontSize: 48, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>Devoir</Typography>
+                  <Typography>Le système de devoirs sera bientôt disponible.</Typography>
                 </Box>
               )}
-            </Typography>
+            </Box>
+
+            {/* Contenu textuel de la leçon */}
+            {currentLessonData.description && (
+              <Typography variant="body1" paragraph>
+                {currentLessonData.description}
+              </Typography>
+            )}
 
             {!progress?.completedLessons.includes(currentLessonData._id) && (
               <Button
