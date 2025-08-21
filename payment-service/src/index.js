@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,10 +6,11 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const winston = require('winston');
+const config = require('./config');
 
 // Configuration du logger
 const logger = winston.createLogger({
-  level: 'info',
+  level: config.logging.level,
   format: winston.format.json(),
   transports: [
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
@@ -18,7 +18,7 @@ const logger = winston.createLogger({
   ],
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (config.nodeEnv !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.simple(),
   }));
@@ -29,27 +29,29 @@ const app = express();
 
 // Middleware de sécurité
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: config.security.corsOrigin
+}));
 app.use(express.json());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limite chaque IP à 100 requêtes par fenêtre
+  windowMs: config.security.rateLimitWindowMs,
+  max: config.security.rateLimitMaxRequests,
+  message: 'Trop de requêtes, veuillez réessayer plus tard.'
 });
 app.use(limiter);
 
 // Connexion à MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(config.mongodb.uri)
 .then(() => logger.info('Connecté à MongoDB'))
 .catch((err) => logger.error('Erreur de connexion à MongoDB:', err));
 
 // Routes
 app.use('/api/payments', require('./routes/payment.routes'));
 app.use('/api/subscriptions', require('./routes/subscription.routes'));
+app.use('/api/webhooks', require('./routes/webhook.routes'));
+app.use('/health', require('./routes/health.routes'));
 
 // Documentation Swagger
 const swaggerDocument = YAML.load('./swagger.yaml');
@@ -60,12 +62,11 @@ app.use((err, req, res, next) => {
   logger.error(err.stack);
   res.status(500).json({
     message: 'Une erreur est survenue!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    error: config.nodeEnv === 'development' ? err.message : undefined
   });
 });
 
 // Démarrage du serveur
-const PORT = process.env.PORT || 3003;
-app.listen(PORT, () => {
-  logger.info(`Service de paiement démarré sur le port ${PORT}`);
+app.listen(config.port, () => {
+  logger.info(`Service de paiement démarré sur le port ${config.port}`);
 }); 

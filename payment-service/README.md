@@ -27,7 +27,7 @@ npm install
 3. Créer un fichier `.env` à la racine du projet avec les variables suivantes :
 ```env
 # Configuration du serveur
-PORT=3003
+PORT=3005
 NODE_ENV=development
 
 # Configuration de la base de données
@@ -44,7 +44,7 @@ JWT_EXPIRATION=24h
 # Configuration des URLs
 FRONTEND_URL=http://localhost:3000
 AUTH_SERVICE_URL=http://localhost:3001
-COURSE_SERVICE_URL=http://localhost:3002
+COURSE_SERVICE_URL=http://localhost:3003
 ```
 
 ## Démarrage

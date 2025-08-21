@@ -1,6 +1,8 @@
 const Payment = require('../models/payment.model');
 const stripeService = require('../services/stripe.service');
 const logger = require('../utils/logger');
+const axios = require('axios');
+const config = require('../config');
 
 class PaymentController {
   // Créer une intention de paiement
@@ -10,12 +12,33 @@ class PaymentController {
       const userId = req.user._id;
 
       // Créer ou récupérer le client Stripe
-      let customer = await stripeService.getCustomer(req.user.stripeCustomerId);
+      let customer;
+      if (req.user.stripeCustomerId) {
+        try {
+          customer = await stripeService.getCustomer(req.user.stripeCustomerId);
+        } catch (error) {
+          logger.warn('Client Stripe introuvable, création d\'un nouveau:', error.message);
+          customer = null;
+        }
+      }
+      
       if (!customer) {
         customer = await stripeService.createCustomer(req.user.email, req.user.name);
-        // Mettre à jour l'utilisateur avec l'ID client Stripe
-        req.user.stripeCustomerId = customer.id;
-        await req.user.save();
+        
+        // Mettre à jour l'utilisateur avec l'ID client Stripe via auth-service
+        try {
+          await axios.patch(`${config.authServiceUrl}/api/users/${userId}`, {
+            stripeCustomerId: customer.id
+          }, {
+            headers: {
+              'Authorization': req.headers.authorization
+            }
+          });
+          logger.info(`Utilisateur ${userId} mis à jour avec stripeCustomerId: ${customer.id}`);
+        } catch (error) {
+          logger.warn('Impossible de mettre à jour stripeCustomerId:', error.message);
+          // Continuer quand même, ce n'est pas critique pour le paiement
+        }
       }
 
       // Créer l'intention de paiement

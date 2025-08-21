@@ -77,6 +77,39 @@ router.delete('/me', auth, async (req, res) => {
   }
 });
 
+// Mettre à jour un utilisateur par ID (pour les services internes)
+router.patch('/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // Autoriser seulement certains champs pour la sécurité
+    const allowedUpdates = ['stripeCustomerId'];
+    const updateKeys = Object.keys(updates);
+    const isValidOperation = updateKeys.every(update => allowedUpdates.includes(update));
+
+    if (!isValidOperation) {
+      return res.status(400).json({ message: 'Champs de mise à jour non autorisés' });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Appliquer les mises à jour
+    updateKeys.forEach(update => user[update] = updates[update]);
+    await user.save();
+
+    res.json({ 
+      message: 'Utilisateur mis à jour avec succès',
+      updatedFields: updateKeys
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la mise à jour', error: error.message });
+  }
+});
+
 // Activer/désactiver la double authentification
 router.put('/2fa', auth, async (req, res) => {
   try {

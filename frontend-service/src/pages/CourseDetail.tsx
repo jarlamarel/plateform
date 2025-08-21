@@ -21,6 +21,10 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
 } from '@mui/material';
 import {
   AccessTime as AccessTimeIcon,
@@ -30,10 +34,14 @@ import {
   Quiz as QuizIcon,
   CheckCircle as CheckCircleIcon,
   Edit as EditIcon,
+  Image as ImageIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import courseService, { Course } from '../services/course.service';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CourseImageManagement from '../components/CourseImageManagement';
+import PaymentModal from '../components/PaymentModal';
 import { toast } from 'react-toastify';
 
 interface TabPanelProps {
@@ -67,6 +75,8 @@ const CourseDetail: React.FC = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [reviews, setReviews] = useState<any>(null);
+  const [showImageManagement, setShowImageManagement] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -103,21 +113,39 @@ const CourseDetail: React.FC = () => {
       return;
     }
 
-    setEnrolling(true);
-    try {
-      await courseService.enrollInCourse(id!);
-      toast.success('Inscription au cours réussie !');
-      navigate(`/courses/${id}/learn`);
-    } catch (error) {
-      console.error('Erreur lors de l\'inscription au cours:', error);
-      toast.error('Une erreur est survenue lors de l\'inscription au cours');
-    } finally {
-      setEnrolling(false);
+    // Si le cours est gratuit, inscription directe
+    if (!course?.price || course.price === 0) {
+      setEnrolling(true);
+      try {
+        await courseService.enrollInCourse(id!);
+        toast.success('Inscription au cours réussie !');
+        navigate(`/courses/${id}/learn`);
+      } catch (error) {
+        console.error('Erreur lors de l\'inscription au cours:', error);
+        toast.error('Une erreur est survenue lors de l\'inscription au cours');
+      } finally {
+        setEnrolling(false);
+      }
+    } else {
+      // Si le cours est payant, ouvrir le modal de paiement
+      setShowPaymentModal(true);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    toast.success('Paiement réussi ! Vous êtes maintenant inscrit au cours.');
+    navigate(`/courses/${id}/learn`);
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleImageUpdated = (newImageUrl: string) => {
+    if (course) {
+      setCourse({ ...course, thumbnail: newImageUrl });
+    }
+    setShowImageManagement(false);
   };
 
   if (loading || !course) {
@@ -165,17 +193,28 @@ const CourseDetail: React.FC = () => {
               </Typography>
             </Box>
             {user?.role === 'instructor' && course.instructor?._id === user._id ? (
-              <Button
-                variant="outlined"
-                color="primary"
-                fullWidth
-                size="large"
-                startIcon={<EditIcon />}
-                onClick={() => navigate(`/courses/${course._id}/lessons`)}
-                sx={{ mb: 2 }}
-              >
-                Gérer les leçons
-              </Button>
+              <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  fullWidth
+                  size="large"
+                  startIcon={<EditIcon />}
+                  onClick={() => navigate(`/courses/${course._id}/lessons`)}
+                >
+                  Gérer les leçons
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  fullWidth
+                  size="large"
+                  startIcon={<ImageIcon />}
+                  onClick={() => setShowImageManagement(true)}
+                >
+                  Gérer l'image
+                </Button>
+              </Box>
             ) : null}
             
             <Button
@@ -188,6 +227,8 @@ const CourseDetail: React.FC = () => {
             >
               {enrolling ? (
                 <CircularProgress size={24} color="inherit" />
+              ) : course?.price && course.price > 0 ? (
+                `Acheter pour ${typeof course.price === 'number' ? course.price.toFixed(2) : course.price}€`
               ) : (
                 'S\'inscrire au cours'
               )}
@@ -370,6 +411,47 @@ const CourseDetail: React.FC = () => {
           </List>
         </TabPanel>
       </Box>
+
+      {/* Dialog de gestion d'image */}
+      <Dialog
+        open={showImageManagement}
+        onClose={() => setShowImageManagement(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            Gérer l'image du cours
+            <IconButton
+              onClick={() => setShowImageManagement(false)}
+              size="small"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <CourseImageManagement
+            courseId={course._id}
+            currentImage={course.thumbnail}
+            courseName={course.title}
+            onImageUpdated={handleImageUpdated}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de paiement */}
+      {course && (
+        <PaymentModal
+          open={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          courseId={course._id}
+          courseTitle={course.title}
+          amount={typeof course.price === 'number' ? course.price : Number(course.price)}
+          currency="EUR"
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
     </Container>
   );
 };

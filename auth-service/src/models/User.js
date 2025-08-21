@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date,
   emailVerificationToken: String,
   emailVerificationExpires: Date,
+  stripeCustomerId: {
+    type: String,
+    trim: true,
+  },
 }, {
   timestamps: true,
 });

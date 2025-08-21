@@ -60,6 +60,13 @@ export interface CourseResponse {
 }
 
 class CourseService {
+  private getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+    };
+  }
+
   async getCourses(filters: CourseFilters = {}): Promise<any> {
     try {
       const response = await axios.get(`${API_URL}/courses`, { params: filters });
@@ -114,6 +121,15 @@ class CourseService {
 
   async addCourseReview(courseId: string, data: { rating: number; comment: string }): Promise<void> {
     await axios.post(`${API_URL}/courses/${courseId}/reviews`, data);
+  }
+
+  async updateCourseImage(courseId: string, imageUrl: string): Promise<Course> {
+    const response = await axios.put(
+      `${API_URL}/courses/${courseId}/image`,
+      { imageUrl },
+      { headers: this.getAuthHeaders() }
+    );
+    return response.data.course;
   }
 }
 

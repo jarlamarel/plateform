@@ -525,4 +525,51 @@ exports.deleteResource = async (req, res) => {
     logger.error('Erreur lors de la suppression de la ressource:', error);
     res.status(500).json({ error: 'Erreur lors de la suppression de la ressource' });
   }
+};
+
+// Mettre à jour l'image d'un cours
+exports.updateCourseImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      return res.status(400).json({ error: 'URL de l\'image requise' });
+    }
+
+    // Vérifier que le cours existe
+    const course = await Course.findById(id);
+    if (!course) {
+      return res.status(404).json({ error: 'Cours non trouvé' });
+    }
+
+    // Vérifier que l'utilisateur est l'instructeur du cours
+    if (course.instructor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Accès refusé. Vous n\'êtes pas l\'instructeur de ce cours.' });
+    }
+
+    // Mettre à jour l'image du cours
+    const updatedCourse = await Course.findByIdAndUpdate(
+      id,
+      { 
+        thumbnail: imageUrl,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    logger.info(`Image du cours mise à jour: ${id} -> ${imageUrl}`);
+    res.json({
+      message: 'Image du cours mise à jour avec succès',
+      course: {
+        _id: updatedCourse._id,
+        title: updatedCourse.title,
+        thumbnail: updatedCourse.thumbnail
+      }
+    });
+
+  } catch (error) {
+    logger.error('Erreur lors de la mise à jour de l\'image du cours:', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour de l\'image du cours' });
+  }
 }; 

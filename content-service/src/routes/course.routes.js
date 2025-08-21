@@ -61,6 +61,14 @@ router.delete(
   courseController.deleteCourse
 );
 
+// Route pour mettre à jour l'image du cours
+router.put(
+  '/:id/image',
+  requireRole('instructor'),
+  requireOwnership('course'),
+  courseController.updateCourseImage
+);
+
 // Routes pour les leçons
 router.get('/:id/lessons', courseController.getCourseLessons);
 router.post(
