@@ -1,0 +1,83 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Service de métriques
+  - job_name: 'metrics-service'
+    static_configs:
+      - targets: ['metrics-service:3006']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 30s
+
+  # Service d'authentification
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:3001']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 30s
+
+  # Service de contenu
+  - job_name: 'content-service'
+    static_configs:
+      - targets: ['content-service:3002']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 30s
+
+  # Service de base de données
+  - job_name: 'database-service'
+    static_configs:
+      - targets: ['database-service:3003']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 30s
+
+  # Service de notification
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:3004']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 30s
+
+  # Service de paiement
+  - job_name: 'payment-service'
+    static_configs:
+      - targets: ['payment-service:3005']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 30s
+
+  # MongoDB (si exposé)
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb:27017']
+    scrape_interval: 60s
+
+  # Node Exporter pour les métriques système
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+# Alerting rules (optionnel)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Recording rules (optionnel)
+# groups:
+#   - name: example
+#     rules:
+#       - record: job:http_inprogress_requests:sum
+#         expr: sum(http_inprogress_requests) by (job)
+
+

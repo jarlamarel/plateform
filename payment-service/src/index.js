@@ -53,6 +53,9 @@ app.use('/api/subscriptions', require('./routes/subscription.routes'));
 app.use('/api/webhooks', require('./routes/webhook.routes'));
 app.use('/health', require('./routes/health.routes'));
 
+// Route de compatibilité pour le frontend
+//app.use('/api/intent', require('./routes/payment.routes'));
+
 // Documentation Swagger
 const swaggerDocument = YAML.load('./swagger.yaml');
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

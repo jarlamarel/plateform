@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3003/api/content';
+const API_URL = process.env.REACT_APP_CONTENT_API_URL || 'http://localhost:3003/api';
 
 export interface Course {
   _id: string;
@@ -69,7 +69,7 @@ class CourseService {
 
   async getCourses(filters: CourseFilters = {}): Promise<any> {
     try {
-      const response = await axios.get(`${API_URL}/courses`, { params: filters });
+      const response = await axios.get(`${API_URL}/content/courses`, { params: filters });
       console.log('API Response:', response.data);
       return response.data;
     } catch (error) {
@@ -79,16 +79,16 @@ class CourseService {
   }
 
   async getCourseById(id: string): Promise<Course> {
-    const response = await axios.get(`${API_URL}/courses/${id}`);
+    const response = await axios.get(`${API_URL}/content/courses/${id}`);
     return response.data;
   }
 
   async enrollInCourse(courseId: string): Promise<void> {
-    await axios.post(`${API_URL}/courses/${courseId}/enroll`);
+    await axios.post(`${API_URL}/content/courses/${courseId}/enroll`);
   }
 
   async getEnrolledCourses(): Promise<Course[]> {
-    const response = await axios.get(`${API_URL}/courses/enrolled`);
+    const response = await axios.get(`${API_URL}/content/courses/enrolled`);
     return response.data;
   }
 
@@ -96,7 +96,7 @@ class CourseService {
     completedLessons: string[];
     progress: number;
   }> {
-    const response = await axios.get(`${API_URL}/courses/${courseId}/progress`);
+    const response = await axios.get(`${API_URL}/content/courses/${courseId}/progress`);
     return response.data;
   }
 

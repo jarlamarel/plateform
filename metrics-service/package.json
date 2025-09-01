@@ -1,0 +1,47 @@
+{
+  "name": "metrics-service",
+  "version": "1.0.0",
+  "description": "Service de collecte et visualisation des métriques pour la plateforme de cours",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
+  },
+  "keywords": ["metrics", "monitoring", "analytics", "dashboard"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "axios": "^1.5.0",
+    "socket.io": "^4.7.2",
+    "node-cron": "^3.0.2",
+    "winston": "^3.10.0",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^6.10.0",
+    "joi": "^17.9.2",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21",
+    "chart.js": "^4.4.0",
+    "redis": "^4.6.8",
+    "prom-client": "^14.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.6.2",
+    "supertest": "^6.3.3",
+    "eslint": "^8.47.0",
+    "@types/node": "^20.5.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

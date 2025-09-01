@@ -104,3 +104,11 @@
 {"level":"info","message":"Connecté à MongoDB"}
 {"level":"info","message":"Serveur démarré sur le port 3001"}
 {"level":"info","message":"Connecté à MongoDB"}
+{"level":"info","message":"Serveur démarré sur le port 3001"}
+{"level":"info","message":"Connecté à MongoDB"}
+{"level":"info","message":"Serveur démarré sur le port 3001"}
+{"level":"info","message":"Connecté à MongoDB"}
+{"level":"info","message":"Serveur démarré sur le port 3001"}
+{"code":"ETIMEOUT","hostname":"cluster0.zfkt3sa.mongodb.net","level":"error","message":"Erreur de connexion à MongoDB: queryTxt ETIMEOUT cluster0.zfkt3sa.mongodb.net","stack":"Error: queryTxt ETIMEOUT cluster0.zfkt3sa.mongodb.net\n    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:293:17)","syscall":"queryTxt"}
+{"level":"info","message":"Serveur démarré sur le port 3001"}
+{"level":"info","message":"Connecté à MongoDB"}

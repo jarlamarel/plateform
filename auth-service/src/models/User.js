@@ -85,7 +85,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 userSchema.methods.generateAuthToken = function() {
   const user = this.toObject();
   delete user.password;
-  return jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign(user, process.env.JWT_SECRET || 'votre_secret_jwt_super_securise_pour_payment_service', { expiresIn: '24h' });
 };
 
 // Méthode pour obtenir les informations publiques de l'utilisateur

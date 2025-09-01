@@ -218,7 +218,7 @@ router.get('/me', async (req, res) => {
   const token = authHeader.split(' ')[1];
   console.log(token);
   try {
-    const decoded = jwt.verify(token, 'votre_secret_jwt'); // Use your real secret!
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'votre_secret_jwt_super_securise_pour_payment_service'); // Use your real secret!
     const user = await User.findById(decoded._id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);

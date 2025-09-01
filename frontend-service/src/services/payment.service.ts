@@ -32,6 +32,7 @@ class PaymentService {
 
   // Créer une intention de paiement
   async createPaymentIntent(courseId: string, amount: number, currency: string = 'EUR'): Promise<PaymentIntent> {
+    console.log('PAYMENT_API_URL', PAYMENT_API_URL);
     try {
       const response = await axios.post(
         `${PAYMENT_API_URL}/intent`,
