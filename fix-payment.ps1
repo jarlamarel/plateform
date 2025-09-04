@@ -36,3 +36,4 @@ Write-Host "2. Redémarrer le frontend: cd frontend-service && npm start" -Foreg
 Write-Host "3. Les paiements devraient maintenant fonctionner !" -ForegroundColor White
 
 Read-Host "`nAppuyez sur Entrée pour continuer..."
+

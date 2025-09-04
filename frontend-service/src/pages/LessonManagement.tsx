@@ -77,8 +77,8 @@ const LessonManagement: React.FC = () => {
     content: '',
     duration: 0,
   });
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3003/api/content';
+  
+  const API_URL = 'http://localhost:3003/api/content';
 
   useEffect(() => {
     if (courseId) {

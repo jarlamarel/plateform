@@ -80,14 +80,15 @@ exports.getLessonById = async (req, res) => {
 // Créer une nouvelle leçon
 exports.createLesson = async (req, res) => {
   try {
-    const course = await Course.findById(req.body.courseId);
+    const course = await Course.findById(req.params.courseId || req.body.courseId);
     if (!course) {
       return res.status(404).json({ error: 'Cours non trouvé' });
     }
 
     const lessonData = {
       ...req.body,
-      instructorId: req.user.id,
+      instructor: req.user.id,
+      courseId: course._id,
     };
 
     const lesson = new Lesson(lessonData);

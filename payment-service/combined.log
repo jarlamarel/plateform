@@ -106,3 +106,10 @@
 {"level":"info","message":"Connecté à MongoDB"}
 {"level":"info","message":"Service de paiement démarré sur le port 3005"}
 {"level":"info","message":"Connecté à MongoDB"}
+{"level":"info","message":"Service de paiement démarré sur le port 3005"}
+{"level":"info","message":"Connecté à MongoDB"}
+{"level":"info","message":"Service de paiement démarré sur le port 3005"}
+{"level":"info","message":"Connecté à MongoDB"}
+{"level":"warn","message":"Impossible de mettre à jour stripeCustomerId:","timestamp":"2025-09-03T14:59:41.235Z"}
+{"level":"info","message":"Service de paiement démarré sur le port 3005"}
+{"level":"info","message":"Connecté à MongoDB"}

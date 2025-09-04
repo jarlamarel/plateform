@@ -62,3 +62,4 @@ Write-Host "2. Configurer les variables d'environnement pour chaque projet" -For
 Write-Host "3. Tester vos applications" -ForegroundColor White
 
 Read-Host "`nAppuyez sur Entrée pour continuer..."
+

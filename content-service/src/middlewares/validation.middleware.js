@@ -83,7 +83,7 @@ exports.validateCourse = (req, res, next) => {
 
 // Middleware de validation pour les leçons
 exports.validateLesson = (req, res, next) => {
-  const { title, content, duration, order } = req.body;
+  const { title, description, content, duration, order } = req.body;
 
   const errors = [];
 
@@ -91,6 +91,13 @@ exports.validateLesson = (req, res, next) => {
     errors.push({
       field: 'title',
       message: 'Le titre doit contenir entre 3 et 100 caractères',
+    });
+  }
+
+  if (!description || description.length < 10 || description.length > 500) {
+    errors.push({
+      field: 'description',
+      message: 'La description doit contenir entre 10 et 500 caractères',
     });
   }
 
@@ -108,6 +115,7 @@ exports.validateLesson = (req, res, next) => {
     });
   }
 
+  // L'ordre est optionnel car il est automatiquement défini par le middleware pre-save
   if (order !== undefined && (isNaN(order) || order < 0)) {
     errors.push({
       field: 'order',

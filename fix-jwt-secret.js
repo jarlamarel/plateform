@@ -49,3 +49,4 @@ try {
   console.log('3. Sauvegardez le fichier');
   console.log('4. Redémarrez le service de paiement');
 }
+

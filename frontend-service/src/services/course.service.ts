@@ -101,7 +101,7 @@ class CourseService {
   }
 
   async markLessonAsCompleted(courseId: string, lessonId: string): Promise<void> {
-    await axios.post(`${API_URL}/courses/${courseId}/lessons/${lessonId}/complete`);
+    await axios.post(`${API_URL}/content/courses/${courseId}/lessons/${lessonId}/complete`);
   }
 
   async getCourseReviews(courseId: string): Promise<{
@@ -115,17 +115,17 @@ class CourseService {
     comment: string;
     createdAt: string;
   }[]> {
-    const response = await axios.get(`${API_URL}/courses/${courseId}/reviews`);
+    const response = await axios.get(`${API_URL}/content/courses/${courseId}/reviews`);
     return response.data;
   }
 
   async addCourseReview(courseId: string, data: { rating: number; comment: string }): Promise<void> {
-    await axios.post(`${API_URL}/courses/${courseId}/reviews`, data);
+    await axios.post(`${API_URL}/content/courses/${courseId}/reviews`, data);
   }
 
   async updateCourseImage(courseId: string, imageUrl: string): Promise<Course> {
     const response = await axios.put(
-      `${API_URL}/courses/${courseId}/image`,
+      `${API_URL}/content/courses/${courseId}/image`,
       { imageUrl },
       { headers: this.getAuthHeaders() }
     );

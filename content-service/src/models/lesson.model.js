@@ -37,7 +37,7 @@ const lessonSchema = new mongoose.Schema(
     },
     order: {
       type: Number,
-      required: [true, 'L\'ordre est requis'],
+      required: false, // Optionnel car automatiquement défini par le middleware pre-save
       min: [0, 'L\'ordre ne peut pas être négatif'],
     },
     prerequisites: [{

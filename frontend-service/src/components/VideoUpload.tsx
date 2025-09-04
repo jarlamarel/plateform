@@ -52,7 +52,7 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3003/api/content';
+  const API_URL = 'http://localhost:3003/api/content';
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

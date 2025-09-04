@@ -229,3 +229,4 @@ console.error('Erreur lors de la récupération des cours:', error);
 5. **Analytics** : Statistiques d'apprentissage détaillées
 
 
+

@@ -84,3 +84,4 @@ console.log('1. Créez un fichier .env dans frontend-service/ avec :');
 console.log('   REACT_APP_PAYMENT_API_URL=http://localhost:3005/api');
 console.log('2. Redémarrez le frontend après modification');
 console.log('3. Vérifiez que le service de paiement est démarré sur le port 3005');
+

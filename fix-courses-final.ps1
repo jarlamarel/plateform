@@ -34,3 +34,4 @@ Write-Host "`n🔄 Redémarrez votre frontend avec: npm start" -ForegroundColor 
 Write-Host "Les cours devraient maintenant s'afficher sur la page d'accueil !" -ForegroundColor Green
 
 Read-Host "`nAppuyez sur Entrée pour continuer..."
+

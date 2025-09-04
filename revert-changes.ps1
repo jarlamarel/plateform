@@ -67,3 +67,4 @@ switch ($choice) {
 
 Write-Host "`n✅ Opération terminée!" -ForegroundColor Green
 Read-Host "Appuyez sur Entrée pour continuer..."
+

@@ -105,3 +105,4 @@ Write-Host "2. Mettre à jour les URLs des APIs dans les variables d'environneme
 Write-Host "3. Tester vos applications" -ForegroundColor White
 
 Read-Host "`nAppuyez sur Entrée pour continuer..."
+

@@ -296,6 +296,10 @@ exports.addLesson = async (req, res) => {
       return res.status(401).json({ error: 'Instructeur non identifié. Veuillez vous reconnecter.' });
     }
 
+    // Calculer l'ordre de la nouvelle leçon
+    const lastLesson = await Lesson.findOne({ courseId: course._id }).sort('-order');
+    const newOrder = lastLesson ? lastLesson.order + 1 : 0;
+
     const lessonData = {
       title: title.trim(),
       description: description.trim(),
@@ -303,6 +307,7 @@ exports.addLesson = async (req, res) => {
       duration: parseInt(duration) || 0,
       courseId: course._id,
       instructor: instructorId,
+      order: newOrder, // Ajouter l'ordre calculé
     };
 
     logger.info('Données de la leçon à créer:', lessonData);
